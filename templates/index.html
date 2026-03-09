@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BudgetIQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4e73df, #1cc88a);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            margin-top: 40px;
+            padding: 30px;
+            border-radius: 10px;
+            width: 450px;
+            box-shadow: 0px 4px 15px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #4e73df;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #2e59d9;
+        }
+
+        .summary {
+            background: #f8f9fc;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .income {
+            color: green;
+            font-weight: bold;
+        }
+
+        .expense {
+            color: red;
+            font-weight: bold;
+        }
+
+        .balance {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            background: #f1f1f1;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>..BudgetIQ..</h1>
+
+    <form method="post">
+        <input type="text" name="title" placeholder="Enter Title" required>
+        <input type="number" name="amount" placeholder="Enter Amount" required>
+        <select name="type">
+            <option value="Income">Income</option>
+            <option value="Expense">Expense</option>
+        </select>
+        <button type="submit">Add Transaction</button>
+    </form>
+
+    <div class="summary">
+        <h3>Summary</h3>
+        <p class="income">Income: ₹{{ income }}</p>
+        <p class="expense">Expense: ₹{{ expense }}</p>
+        <p class="balance">Balance: ₹{{ balance }}</p>
+    </div>
+
+    <h3>Transactions</h3>
+    <ul>
+        {% for x in data %}
+        <li>
+            {{ x[1] }} - ₹{{ x[2] }} ({{ x[3] }})
+        </li>
+        {% endfor %}
+    </ul>
+
+</div>
+
+</body>
+</html>

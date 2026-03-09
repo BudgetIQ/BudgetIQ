@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Expenses - BudgetIQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f9fc;
+            padding: 40px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #4e73df;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f1f1f1;
+        }
+
+        .back {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .back a {
+            text-decoration: none;
+            padding: 8px 15px;
+            background: #1cc88a;
+            color: white;
+            border-radius: 5px;
+        }
+
+        .back a:hover {
+            background: #17a673;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Your Expenses</h2>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Amount(rs.)</th>
+        <th>Category</th>
+        <th>description</th>
+        <th>Date</th>
+    </tr>
+
+    {% for expense in expenses %}
+    <tr>
+        <td>{{ expense[0] }}</td>
+        <td>{{ expense[1] }}</td>
+        <td>{{ expense[2] }}</td>
+        <td>{{ expense[3] }}</td>
+        <td>{{ expense[4] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div class="back">
+    <a href="/dashboard">Back to Dashboard</a>
+</div>
+
+</body>
+</html>

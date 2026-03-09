@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Register</title>
+<style>
+body {font-family:Arial;background:#4CAF50;display:flex;justify-content:center;align-items:center;height:100vh;}
+.box {background:white;padding:30px;border-radius:8px;width:300px;text-align:center;}
+input,button {width:100%;padding:8px;margin:8px 0;}
+button {background:#4CAF50;color:white;border:none;}
+a {text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>Register</h2>
+<form method="POST" action="/register">
+    
+    <input type="text" name="username" placeholder="Enter Username" required>
+
+    <input type="email" name="email" placeholder="Enter Email" required>
+
+    <input type="password" name="password" placeholder="Enter Password" required>
+
+    <button type="submit">Register</button>
+
+</form>
+<a href="/login">Already have account?</a>
+</div>
+</body>
+</html>

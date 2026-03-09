@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Monthly Report</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="chart-container">
+    <canvas id="monthlyChart"></canvas>
+</div>
+
+<script>
+
+const ctx = document.getElementById('monthlyChart').getContext('2d');
+
+new Chart(ctx, {
+    type: 'bar',
+
+    data: {
+        labels: {{ months | tojson }},
+        datasets: [{
+            label: 'Monthly Expenses',
+            data: {{ totals | tojson }},
+            backgroundColor: '#3498db'
+        }]
+    },
+
+    options:{
+        responsive:true,
+        maintainAspectRatio:false
+    }
+
+});
+
+</script>
+<style>
+.chart-container{
+    width:600px;
+    height:350px;
+    margin:30px auto;
+}
+
+body{
+    font-family: Arial;
+    background:#f4f6f9;
+    padding:30px;
+}
+
+.container{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+}
+
+h2{
+    color:#2c3e50;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    padding:10px;
+    border-bottom:1px solid #ddd;
+    text-align:center;
+}
+
+th{
+    background:#34495e;
+    color:white;
+}
+
+.back-btn{
+    background:#3498db;
+    color:white;
+    padding:8px 14px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
+
+.back-btn:hover{
+    background:#2980b9;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<a href="/dashboard">
+<button class="back-btn">⬅ Back to Dashboard</button>
+</a>
+
+<h2>Monthly Report ({{year}})</h2>
+
+<table>
+
+<tr>
+<th>Month</th>
+<th>Total Expense</th>
+</tr>
+
+{% for row in data %}
+
+<tr>
+<td>{{ row[0] }}</td>
+<td>{{ row[1] }}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+</div>
+
+
+</body>
+</html>

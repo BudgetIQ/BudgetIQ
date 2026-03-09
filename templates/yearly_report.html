@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Yearly Report</title>
+<h2>Yearly Expense Graph</h2>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="chart-container">
+    <canvas id="yearlyChart"></canvas>
+</div>
+<script>
+const ctx = document.getElementById('yearlyChart');
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: {{ years | tojson }},
+        datasets: [{
+            label: 'Yearly Expense',
+            data: {{ amounts | tojson }},
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+</script>
+<style>
+
+canvas{
+max-width:600px;
+max-height:400px;
+margin:auto;
+display:block;
+}
+body{
+font-family:Arial;
+background:#f4f6f9;
+}
+
+.container{
+width:80%;
+margin:auto;
+margin-top:40px;
+}
+
+.card{
+background:white;
+padding:20px;
+margin-bottom:30px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+h2{
+text-align:center;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+th,td{
+padding:10px;
+border:1px solid #ddd;
+text-align:center;
+}
+
+th{
+background:#2c3e50;
+color:white;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+<a href="/dashboard">
+    <button class="back-btn">⬅ Back to Dashboard</button>
+</a>
+<h2>Yearly Expense Table</h2>
+
+<table>
+<tr>
+<th>Year</th>
+<th>Total Expense</th>
+</tr>
+
+{% for row in data %}
+<tr>
+<td>{{ row.year }}</td>
+<td>{{ row.total }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</div>
+
+<div class="card">
+
+
+<canvas id="yearlyChart"></canvas>
+
+</div>
+
+</div>
+
+
+</body>
+</html>
