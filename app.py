@@ -1,19 +1,25 @@
-from flask import Flask, render_template, request, redirect, session,url_for
-import mysql.connector
+from flask import Flask, render_template, request, redirect, session, url_for, g
 from datetime import datetime
+import sqlite3
 
 app = Flask(__name__)
 app.secret_key = "budgetiq_secretkey"
 
-# ---------------- DATABASE CONNECTION ----------------
-db = mysql.connector.connect(
-    host="localhost",
-    user="karan",
-    password="karan@1234",  # 🔴 change this
-    database="budgetiq"
-)
+DATABASE = "budget.db"
 
-cursor = db.cursor(dictionary=True, buffered=True)
+# ---------------- DATABASE CONNECTION ----------------
+def get_db():
+    if 'db' not in g:
+        g.db = sqlite3.connect(DATABASE)
+        g.db.row_factory = sqlite3.Row
+    return g.db
+
+@app.teardown_appcontext
+def close_db(error):
+    db = g.pop('db', None)
+    if db is not None:
+        db.close()
+
 # ---------------- HOME ----------------
 @app.route('/')
 def home():
@@ -22,46 +28,56 @@ def home():
 # ---------------- REGISTER ----------------
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
 
-        sql = "INSERT INTO users (username, email, password) VALUES (%s, %s, %s)"
-        values = (username, email, password)
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
 
-        cursor.execute(sql, values)
-        db.commit()
-
-        return redirect(url_for('login'))
-
-    return render_template('register.html')
-
-# ---------------- LOGIN ----------------
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
+        db = get_db()
+        cursor = db.cursor()
 
         cursor.execute(
-            "SELECT * FROM users WHERE email=%s AND password=%s",
-            (username, password)
+            "INSERT INTO users (username,email,password) VALUES (?,?,?)",
+            (username, email, password)
         )
+
+        db.commit()
+
+        return redirect('/login')
+
+    return render_template("register.html")
+
+# ---------------- LOGIN ----------------
+@app.route('/login', methods=['GET','POST'])
+def login():
+
+    if request.method == 'POST':
+
+        email = request.form['email']
+        password = request.form['password']
+
+        db = get_db()
+        cursor = db.cursor()
+
+        cursor.execute(
+            "SELECT * FROM users WHERE email=? AND password=?",
+            (email,password)
+        )
+
         user = cursor.fetchone()
 
         if user:
             session['user_id'] = user['id']
             return redirect('/dashboard')
 
-    return render_template('login.html')
-
+    return render_template("login.html")
 
 # ---------------- DASHBOARD ----------------
-from datetime import datetime
-
 @app.route('/dashboard')
 def dashboard():
+
     if 'user_id' not in session:
         return redirect('/login')
 
@@ -70,14 +86,18 @@ def dashboard():
     if not year:
         year = datetime.now().year
 
+    db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id, amount, category, description, date
         FROM expenses
-        WHERE user_id=%s AND YEAR(date)=%s
+        WHERE user_id=? AND strftime('%Y',date)=?
         ORDER BY date DESC
-    """, (session['user_id'], year))
+        """,
+        (session['user_id'], str(year))
+    )
 
     expenses = cursor.fetchall()
 
@@ -86,6 +106,7 @@ def dashboard():
 # ---------------- ADD EXPENSE ----------------
 @app.route('/add_expense', methods=['POST'])
 def add_expense():
+
     if 'user_id' not in session:
         return redirect('/login')
 
@@ -93,26 +114,34 @@ def add_expense():
     category = request.form['category']
     description = request.form['description']
     date = request.form['date']
-    user_id = session['user_id']
-    cursor.execute("""
-        INSERT INTO expenses (user_id, amount, category, description, date)
-        VALUES (%s, %s, %s, %s, %s)
-    """, (session['user_id'], amount, category, description, date))
+
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO expenses (user_id,amount,category,description,date)
+        VALUES (?,?,?,?,?)
+        """,
+        (session['user_id'], amount, category, description, date)
+    )
 
     db.commit()
-    return redirect('/dashboard')
 
+    return redirect('/dashboard')
 
 # ---------------- DELETE EXPENSE ----------------
 @app.route('/delete/<int:id>', methods=['POST'])
 def delete(id):
+
     if 'user_id' not in session:
         return redirect('/login')
 
+    db = get_db()
     cursor = db.cursor()
 
     cursor.execute(
-        "DELETE FROM expenses WHERE id=%s AND user_id=%s",
+        "DELETE FROM expenses WHERE id=? AND user_id=?",
         (id, session['user_id'])
     )
 
@@ -129,18 +158,25 @@ def monthly_report():
 
     year = request.args.get('year')
 
+    if not year:
+        year = datetime.now().year
+
+    db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("""
-        SELECT MONTH(date), SUM(amount)
+    cursor.execute(
+        """
+        SELECT strftime('%m',date) as month, SUM(amount)
         FROM expenses
-        WHERE user_id=%s AND YEAR(date)=%s
-        GROUP BY MONTH(date)
-    """, (session['user_id'], year))
+        WHERE user_id=? AND strftime('%Y',date)=?
+        GROUP BY month
+        """,
+        (session['user_id'], str(year))
+    )
 
     data = cursor.fetchall()
 
-    months = [row[0] for row in data]
+    months = [row['month'] for row in data]
     totals = [row[1] for row in data]
 
     return render_template(
@@ -154,21 +190,28 @@ def monthly_report():
 # ---------------- YEARLY REPORT ----------------
 @app.route('/yearly_report')
 def yearly_report():
+
     if 'user_id' not in session:
         return redirect('/login')
 
-    cursor.execute("""
-        SELECT YEAR(date) AS year, SUM(amount) AS total
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute(
+        """
+        SELECT strftime('%Y',date) as year, SUM(amount) as total
         FROM expenses
-        WHERE user_id=%s
-        GROUP BY YEAR(date)
-        ORDER BY YEAR(date)
-    """, (session['user_id'],))
+        WHERE user_id=?
+        GROUP BY year
+        ORDER BY year
+        """,
+        (session['user_id'],)
+    )
 
     data = cursor.fetchall()
 
     years = [row['year'] for row in data]
-    amounts = [float(row['total']) for row in data]
+    amounts = [row['total'] for row in data]
 
     return render_template(
         "yearly_report.html",
@@ -176,6 +219,7 @@ def yearly_report():
         years=years,
         amounts=amounts
     )
+
 # ---------------- CATEGORY REPORT ----------------
 @app.route('/category_report')
 def category_report():
@@ -185,18 +229,25 @@ def category_report():
 
     year = request.args.get('year')
 
+    if not year:
+        year = datetime.now().year
+
+    db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT category, SUM(amount)
         FROM expenses
-        WHERE user_id=%s AND YEAR(date)=%s
+        WHERE user_id=? AND strftime('%Y',date)=?
         GROUP BY category
-    """, (session['user_id'], year))
+        """,
+        (session['user_id'], str(year))
+    )
 
     data = cursor.fetchall()
 
-    categories = [row[0] for row in data]
+    categories = [row['category'] for row in data]
     totals = [row[1] for row in data]
 
     return render_template(
@@ -212,7 +263,6 @@ def category_report():
 def logout():
     session.clear()
     return redirect('/login')
-
 
 # ---------------- RUN APP ----------------
 if __name__ == "__main__":
